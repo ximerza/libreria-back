@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Tabla de Usuarios (Lectores)
+model User {
+  id        String    @id @default(uuid())
+  name      String
+  username  String    @unique
+  email     String    @unique
+  password  String
+  role      Role      @default(USER)
+  avatarUrl String?
+  bio       String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relaciones
+  createdClubs    Club[]              @relation("CreatedClubs")
+  clubMemberships ClubMember[]
+  readings        Reading[]
+  posts           Post[]
+  comments        Comment[]
+}
+
+// Tabla de Libros (de la API Open Library)
+model Book {
+  id          String    @id @default(uuid())
+  title       String
+  author      String
+  description String?
+  coverUrl    String?
+  isbn        String?
+  publishYear Int?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relaciones
+  readings Reading[]
+}
+
+// Tabla de Clubs de Lectura
+model Club {
+  id          String        @id @default(uuid())
+  name        String
+  description String?
+  imageUrl    String?
+  creatorId   String
+  creator     User          @relation("CreatedClubs", fields: [creatorId], references: [id], onDelete: Cascade)
+  isPublic    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relaciones
+  members ClubMember[]
+  posts   Post[]
+}
+
+// Tabla intermedia para miembros de clubs
+model ClubMember {
+  id     String @id @default(uuid())
+  userId String
+  clubId String
+  role   MemberRole @default(MEMBER)
+  joinedAt DateTime @default(now())
+
+  // Relaciones
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  club Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, clubId])
+}
+
+// Tabla de Historial de Lecturas
+model Reading {
+  id        String         @id @default(uuid())
+  userId    String
+  bookId    String
+  status    ReadingStatus  @default(WANT_TO_READ)
+  startDate DateTime?
+  endDate   DateTime?
+  rating    Int?           // 1 a 5
+  review    String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  // Relaciones
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, bookId])
+}
+
+// Tabla de Publicaciones en Clubs
+model Post {
+  id        String   @id @default(uuid())
+  content   String
+  userId    String
+  clubId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  club     Club       @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  comments Comment[]
+}
+
+// Tabla de Comentarios en Posts
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+// Enums
+enum Role {
+  USER
+  ADMIN
+}
+
+enum MemberRole {
+  MEMBER
+  MODERATOR
+  ADMIN
+}
+
+enum ReadingStatus {
+  WANT_TO_READ
+  CURRENTLY_READING
+  READ
+}
