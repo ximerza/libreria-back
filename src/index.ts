@@ -25,12 +25,17 @@ app.get('/api/v1/health', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'API funcionando correctamente!' });
 });
 
-// Iniciar servidor
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-  console.log(`✅ Ruta de prueba: http://localhost:${PORT}/api/v1/health`);
-  console.log(`✅ Rutas de auth: /api/v1/auth/register y /api/v1/auth/login`);
-  console.log(`✅ Rutas de books: /api/v1/books`);
-  console.log(`✅ Rutas de clubs: /api/v1/clubs`);
-  console.log(`✅ Ruta de seed: /api/v1/seed (para poblar datos de prueba)`);
-});
+// Para Vercel
+module.exports = app;
+
+// Para desarrollo local
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+    console.log(`✅ Ruta de prueba: http://localhost:${PORT}/api/v1/health`);
+    console.log(`✅ Rutas de auth: /api/v1/auth/register y /api/v1/auth/login`);
+    console.log(`✅ Rutas de books: /api/v1/books`);
+    console.log(`✅ Rutas de clubs: /api/v1/clubs`);
+    console.log(`✅ Ruta de seed: /api/v1/seed (para poblar datos de prueba)`);
+  });
+}
